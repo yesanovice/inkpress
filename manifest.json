@@ -14,8 +14,8 @@
       "purpose": "any"
     },
     {
-      "src": "good.png",
-      "sizes": "192x192",
+      "src": "good1.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
