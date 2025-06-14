@@ -92,36 +92,14 @@ class InkPress {
         
         const noteIndex = this.notes.findIndex(note => note.id === this.currentNoteId);
         if (noteIndex !== -1) {
-            // Sanitize content by making image sources data URLs
-            const sanitizedContent = this.sanitizeContent(this.noteContent.innerHTML);
-            
             this.notes[noteIndex].title = this.noteTitle.value;
-            this.notes[noteIndex].content = sanitizedContent;
+            this.notes[noteIndex].content = this.noteContent.innerHTML;
             this.notes[noteIndex].updatedAt = new Date().toISOString();
             
             this.saveNotes();
             this.renderNotesList();
             this.showToast('Note saved');
         }
-    }
-    
-    // Sanitize content by ensuring images are saved as data URLs
-    sanitizeContent(content) {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-        
-        // Process all images in the content
-        const images = tempDiv.querySelectorAll('img');
-        images.forEach(img => {
-            // If image is already a data URL, keep it
-            if (!img.src.startsWith('data:')) {
-                // Convert to data URL (this would need actual implementation for non-data URLs)
-                // For now, we'll just ensure existing data URLs are preserved
-                console.warn('External images are not saved permanently. Use data URLs.');
-            }
-        });
-        
-        return tempDiv.innerHTML;
     }
     
     deleteNote() {
@@ -277,16 +255,17 @@ class InkPress {
             img.style.borderRadius = '4px';
             img.style.margin = '0.5rem 0';
             
-            // Add delete button for the image
+            // Create container with delete button
             const container = document.createElement('div');
             container.style.position = 'relative';
             container.style.display = 'inline-block';
+            container.style.width = '100%';
             
             const deleteBtn = document.createElement('button');
             deleteBtn.innerHTML = '×';
             deleteBtn.style.position = 'absolute';
-            deleteBtn.style.top = '0';
-            deleteBtn.style.right = '0';
+            deleteBtn.style.top = '5px';
+            deleteBtn.style.right = '5px';
             deleteBtn.style.background = 'var(--danger-color)';
             deleteBtn.style.color = 'white';
             deleteBtn.style.border = 'none';
@@ -294,20 +273,44 @@ class InkPress {
             deleteBtn.style.width = '24px';
             deleteBtn.style.height = '24px';
             deleteBtn.style.cursor = 'pointer';
-            deleteBtn.addEventListener('click', () => container.remove());
+            deleteBtn.style.fontSize = '16px';
+            deleteBtn.style.lineHeight = '24px';
+            deleteBtn.style.textAlign = 'center';
+            deleteBtn.style.padding = '0';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                container.remove();
+            });
             
             container.appendChild(img);
             container.appendChild(deleteBtn);
             
-            this.insertAtCursor(container);
+            // Mobile-friendly insertion
+            if (this.isMobile()) {
+                // For mobile, always append to the end
+                this.noteContent.appendChild(container);
+            } else {
+                // For desktop, insert at cursor position
+                this.insertAtCursor(container);
+            }
+            
+            // Focus the editor and scroll to the new image
+            this.noteContent.focus();
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
             this.imageUpload.value = ''; // Reset file input
+            this.showToast('Image added');
         };
         reader.readAsDataURL(file);
     }
     
+    isMobile() {
+        return window.innerWidth <= 768;
+    }
+    
     insertAtCursor(node) {
         const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
+        if (selection.rangeCount > 0 && !selection.isCollapsed) {
             const range = selection.getRangeAt(0);
             range.deleteContents();
             range.insertNode(node);
@@ -318,13 +321,9 @@ class InkPress {
             newRange.collapse(true);
             selection.removeAllRanges();
             selection.addRange(newRange);
-            
-            // Focus the editor
-            this.noteContent.focus();
         } else {
-            // If no selection, just append to the end
+            // If no selection or collapsed, append to the end
             this.noteContent.appendChild(node);
-            this.noteContent.focus();
         }
     }
     
