@@ -17,8 +17,6 @@ class InkPress {
         this.saveNoteBtn = document.getElementById('saveNoteBtn');
         this.deleteNoteBtn = document.getElementById('deleteNoteBtn');
         this.themeToggle = document.getElementById('themeToggle');
-        this.insertImageBtn = document.getElementById('insertImageBtn');
-        this.imageUpload = document.getElementById('imageUpload');
         this.toast = document.getElementById('toast');
         
         // Initialize
@@ -38,8 +36,6 @@ class InkPress {
         this.deleteNoteBtn.addEventListener('click', () => this.deleteNote());
         this.searchInput.addEventListener('input', (e) => this.searchNotes(e.target.value));
         this.themeToggle.addEventListener('click', () => this.toggleTheme());
-        this.insertImageBtn.addEventListener('click', () => this.imageUpload.click());
-        this.imageUpload.addEventListener('change', (e) => this.handleImageUpload(e));
         
         // Content editable events
         this.noteContent.addEventListener('input', () => this.updateWordCount());
@@ -235,96 +231,6 @@ class InkPress {
     toggleTheme() {
         const newTheme = this.theme === 'light' ? 'dark' : 'light';
         this.setTheme(newTheme);
-    }
-    
-    handleImageUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        if (!file.type.match('image.*')) {
-            this.showToast('Please select an image file');
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.style.maxWidth = '100%';
-            img.style.height = 'auto';
-            img.style.borderRadius = '4px';
-            img.style.margin = '0.5rem 0';
-            
-            // Create container with delete button
-            const container = document.createElement('div');
-            container.style.position = 'relative';
-            container.style.display = 'inline-block';
-            container.style.width = '100%';
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '×';
-            deleteBtn.style.position = 'absolute';
-            deleteBtn.style.top = '5px';
-            deleteBtn.style.right = '5px';
-            deleteBtn.style.background = 'var(--danger-color)';
-            deleteBtn.style.color = 'white';
-            deleteBtn.style.border = 'none';
-            deleteBtn.style.borderRadius = '50%';
-            deleteBtn.style.width = '24px';
-            deleteBtn.style.height = '24px';
-            deleteBtn.style.cursor = 'pointer';
-            deleteBtn.style.fontSize = '16px';
-            deleteBtn.style.lineHeight = '24px';
-            deleteBtn.style.textAlign = 'center';
-            deleteBtn.style.padding = '0';
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                container.remove();
-            });
-            
-            container.appendChild(img);
-            container.appendChild(deleteBtn);
-            
-            // Mobile-friendly insertion
-            if (this.isMobile()) {
-                // For mobile, always append to the end
-                this.noteContent.appendChild(container);
-            } else {
-                // For desktop, insert at cursor position
-                this.insertAtCursor(container);
-            }
-            
-            // Focus the editor and scroll to the new image
-            this.noteContent.focus();
-            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            
-            this.imageUpload.value = ''; // Reset file input
-            this.showToast('Image added');
-        };
-        reader.readAsDataURL(file);
-    }
-    
-    isMobile() {
-        return window.innerWidth <= 768;
-    }
-    
-    insertAtCursor(node) {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0 && !selection.isCollapsed) {
-            const range = selection.getRangeAt(0);
-            range.deleteContents();
-            range.insertNode(node);
-            
-            // Move cursor after the inserted image
-            const newRange = document.createRange();
-            newRange.setStartAfter(node);
-            newRange.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(newRange);
-        } else {
-            // If no selection or collapsed, append to the end
-            this.noteContent.appendChild(node);
-        }
     }
     
     showToast(message) {
