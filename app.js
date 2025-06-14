@@ -92,36 +92,14 @@ class InkPress {
         
         const noteIndex = this.notes.findIndex(note => note.id === this.currentNoteId);
         if (noteIndex !== -1) {
-            // Sanitize content by making image sources data URLs
-            const sanitizedContent = this.sanitizeContent(this.noteContent.innerHTML);
-            
             this.notes[noteIndex].title = this.noteTitle.value;
-            this.notes[noteIndex].content = sanitizedContent;
+            this.notes[noteIndex].content = this.noteContent.innerHTML;
             this.notes[noteIndex].updatedAt = new Date().toISOString();
             
             this.saveNotes();
             this.renderNotesList();
             this.showToast('Note saved');
         }
-    }
-    
-    // Sanitize content by ensuring images are saved as data URLs
-    sanitizeContent(content) {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-        
-        // Process all images in the content
-        const images = tempDiv.querySelectorAll('img');
-        images.forEach(img => {
-            // If image is already a data URL, keep it
-            if (!img.src.startsWith('data:')) {
-                // Convert to data URL (this would need actual implementation for non-data URLs)
-                // For now, we'll just ensure existing data URLs are preserved
-                console.warn('External images are not saved permanently. Use data URLs.');
-            }
-        });
-        
-        return tempDiv.innerHTML;
     }
     
     deleteNote() {
@@ -144,7 +122,12 @@ class InkPress {
         if (note) {
             this.currentNoteId = note.id;
             this.noteTitle.value = note.title;
+            
+            // Clear existing content and load note content (including images)
             this.noteContent.innerHTML = note.content;
+            
+            // Add delete handlers for any existing images
+            this.addImageDeleteHandlers();
             
             const createdAt = new Date(note.createdAt);
             const updatedAt = new Date(note.updatedAt);
@@ -167,6 +150,40 @@ class InkPress {
             // Focus the title field
             this.noteTitle.focus();
         }
+    }
+    
+    // Add delete handlers to all images in the current note
+    addImageDeleteHandlers() {
+        const images = this.noteContent.querySelectorAll('img');
+        images.forEach(img => {
+            const container = document.createElement('div');
+            container.style.position = 'relative';
+            container.style.display = 'inline-block';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '×';
+            deleteBtn.style.position = 'absolute';
+            deleteBtn.style.top = '0';
+            deleteBtn.style.right = '0';
+            deleteBtn.style.background = 'var(--danger-color)';
+            deleteBtn.style.color = 'white';
+            deleteBtn.style.border = 'none';
+            deleteBtn.style.borderRadius = '50%';
+            deleteBtn.style.width = '24px';
+            deleteBtn.style.height = '24px';
+            deleteBtn.style.cursor = 'pointer';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                container.remove();
+            });
+            
+            // Wrap the image with container if not already wrapped
+            if (img.parentNode !== container) {
+                img.parentNode.insertBefore(container, img);
+                container.appendChild(img);
+                container.appendChild(deleteBtn);
+            }
+        });
     }
     
     closeEditor() {
@@ -277,7 +294,7 @@ class InkPress {
             img.style.borderRadius = '4px';
             img.style.margin = '0.5rem 0';
             
-            // Add delete button for the image
+            // Create container with delete button
             const container = document.createElement('div');
             container.style.position = 'relative';
             container.style.display = 'inline-block';
@@ -318,14 +335,13 @@ class InkPress {
             newRange.collapse(true);
             selection.removeAllRanges();
             selection.addRange(newRange);
-            
-            // Focus the editor
-            this.noteContent.focus();
         } else {
-            // If no selection, just append to the end
+            // If no selection, append to the end
             this.noteContent.appendChild(node);
-            this.noteContent.focus();
         }
+        
+        // Focus the editor
+        this.noteContent.focus();
     }
     
     showToast(message) {
