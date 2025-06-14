@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The InkPress</title>
+    <meta name="description" content="A elegant note-taking PWA">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>The InkPress</h1>
+            <div class="header-actions">
+                <button id="newNoteBtn" class="icon-btn" title="New Note">✒️</button>
+                <button id="themeToggle" class="icon-btn" title="Toggle Theme">🌓</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search notes...">
+                </div>
+                <div class="notes-list" id="notesList">
+                    <!-- Notes will be populated here by JavaScript -->
+                </div>
+            </aside>
+
+            <main class="editor-container">
+                <div id="emptyState" class="empty-state">
+                    <p>✒️ Create a new note or select one from the sidebar</p>
+                </div>
+                <div id="editorView" class="editor-view" style="display: none;">
+                    <input type="text" id="noteTitle" class="note-title" placeholder="Note Title">
+                    <div class="editor-toolbar">
+                        <button class="toolbar-btn" data-command="bold" title="Bold">B</button>
+                        <button class="toolbar-btn" data-command="italic" title="Italic">I</button>
+                        <button class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">•</button>
+                        <button class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">1.</button>
+                        <button class="toolbar-btn" id="insertImageBtn" title="Insert Image">🖼️</button>
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                        <div class="spacer"></div>
+                        <button id="saveNoteBtn" class="save-btn">Save</button>
+                        <button id="deleteNoteBtn" class="delete-btn">Delete</button>
+                    </div>
+                    <div id="noteContent" class="note-content" contenteditable="true"></div>
+                    <div class="note-meta">
+                        <span id="noteDate"></span>
+                        <span id="wordCount">0 words</span>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
