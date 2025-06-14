@@ -92,14 +92,36 @@ class InkPress {
         
         const noteIndex = this.notes.findIndex(note => note.id === this.currentNoteId);
         if (noteIndex !== -1) {
+            // Sanitize content by making image sources data URLs
+            const sanitizedContent = this.sanitizeContent(this.noteContent.innerHTML);
+            
             this.notes[noteIndex].title = this.noteTitle.value;
-            this.notes[noteIndex].content = this.noteContent.innerHTML;
+            this.notes[noteIndex].content = sanitizedContent;
             this.notes[noteIndex].updatedAt = new Date().toISOString();
             
             this.saveNotes();
             this.renderNotesList();
             this.showToast('Note saved');
         }
+    }
+    
+    // Sanitize content by ensuring images are saved as data URLs
+    sanitizeContent(content) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        
+        // Process all images in the content
+        const images = tempDiv.querySelectorAll('img');
+        images.forEach(img => {
+            // If image is already a data URL, keep it
+            if (!img.src.startsWith('data:')) {
+                // Convert to data URL (this would need actual implementation for non-data URLs)
+                // For now, we'll just ensure existing data URLs are preserved
+                console.warn('External images are not saved permanently. Use data URLs.');
+            }
+        });
+        
+        return tempDiv.innerHTML;
     }
     
     deleteNote() {
@@ -250,7 +272,34 @@ class InkPress {
         reader.onload = (e) => {
             const img = document.createElement('img');
             img.src = e.target.result;
-            this.insertAtCursor(img);
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.borderRadius = '4px';
+            img.style.margin = '0.5rem 0';
+            
+            // Add delete button for the image
+            const container = document.createElement('div');
+            container.style.position = 'relative';
+            container.style.display = 'inline-block';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '×';
+            deleteBtn.style.position = 'absolute';
+            deleteBtn.style.top = '0';
+            deleteBtn.style.right = '0';
+            deleteBtn.style.background = 'var(--danger-color)';
+            deleteBtn.style.color = 'white';
+            deleteBtn.style.border = 'none';
+            deleteBtn.style.borderRadius = '50%';
+            deleteBtn.style.width = '24px';
+            deleteBtn.style.height = '24px';
+            deleteBtn.style.cursor = 'pointer';
+            deleteBtn.addEventListener('click', () => container.remove());
+            
+            container.appendChild(img);
+            container.appendChild(deleteBtn);
+            
+            this.insertAtCursor(container);
             this.imageUpload.value = ''; // Reset file input
         };
         reader.readAsDataURL(file);
@@ -271,6 +320,10 @@ class InkPress {
             selection.addRange(newRange);
             
             // Focus the editor
+            this.noteContent.focus();
+        } else {
+            // If no selection, just append to the end
+            this.noteContent.appendChild(node);
             this.noteContent.focus();
         }
     }
@@ -301,9 +354,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Handle mobile sidebar toggle
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    document.body.appendChild(overlay);
+    
     if (window.innerWidth <= 768) {
         document.querySelector('.app-header h1').addEventListener('click', () => {
             sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        });
+        
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
         });
     }
     
@@ -311,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => {
         if (window.innerWidth > 768) {
             sidebar.classList.remove('open');
+            overlay.classList.remove('active');
         }
     });
 });
